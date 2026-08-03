@@ -3,6 +3,11 @@ const $ = (id) => document.getElementById(id);
 const SUPABASE_URL = "https://qzdvgwnnnmsuxwsynesm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_w3SUeTvCKx8o8kHV3I5U2A_wa_FbbgS";
 
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
 const splash = $("splash");
 const app = $("app");
 
