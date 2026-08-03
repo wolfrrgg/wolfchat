@@ -437,53 +437,53 @@ function saveIdentity() {
 function connectToServer() {
   disconnect();
 
-  /*
-   * Saat website sudah di-deploy ke server,
-   * WebSocket akan menggunakan host website yang sama.
-   */
-
-  const protocol =
-    location.protocol === "https:"
-      ? "wss:"
-      : "ws:";
-
-  const wsUrl =
-    `${protocol}//${location.host}`;
+  statusEl.textContent = "Connecting...";
 
   try {
-    socket = new WebSocket(wsUrl);
+    realtimeChannel = supabase
+      .channel(`room:${roomId}`)
+      .on(
+        "broadcast",
+        { event: "message" },
+        ({ payload }) => {
+          handleSocketMessage(JSON.stringify(payload));
+        }
+      )
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          statusEl.textContent = "Secure connection";
 
-    socket.addEventListener("open", () => {
-      statusEl.textContent = "Secure connection";
+          await realtimeChannel.send({
+            type: "broadcast",
+            event: "message",
+            payload: {
+              type: "join",
+              room: roomId,
+              username
+            }
+          });
 
-      socket.send(
-        JSON.stringify({
-          type: "join",
-          room: roomId,
-          username
-        })
-      );
+          updateRoomLink();
+        }
 
-      updateRoomLink();
-    });
+        if (status === "CHANNEL_ERROR") {
+          statusEl.textContent = "Connection error";
+        }
 
-    socket.addEventListener("message", (event) => {
-      handleSocketMessage(event.data);
-    });
+        if (status === "TIMED_OUT") {
+          statusEl.textContent = "Connection timeout";
+        }
 
-    socket.addEventListener("close", () => {
-      statusEl.textContent = "Offline";
-    });
+        if (status === "CLOSED") {
+          statusEl.textContent = "Offline";
+        }
+      });
 
-    socket.addEventListener("error", () => {
-      statusEl.textContent = "Local mode";
-    });
-
-  } catch {
-    statusEl.textContent = "Local mode";
+  } catch (error) {
+    console.error(error);
+    statusEl.textContent = "Connection error";
   }
 }
-
 function handleSocketMessage(raw) {
   let data;
 
