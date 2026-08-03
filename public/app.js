@@ -31,9 +31,8 @@ const settingsBtn = $("settings");
 let mode = "create";
 let roomId = "";
 let username = "";
-let ttl = 3600;
+let ttl = 3600
 
-let socket = null;
 let peerKey = null;
 
 const STORAGE_PREFIX = "wolfchat_";
@@ -215,15 +214,10 @@ function sendMessage() {
 
   messageInput.value = "";
 
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(
-      JSON.stringify({
-        type: "message",
-        room: roomId,
-        message
-      })
-    );
-  }
+  broadcastToRoom({
+  type: "message",
+  message
+});
 
   scheduleDelete(message);
 }
@@ -331,14 +325,9 @@ deleteAllBtn.addEventListener("click", () => {
 
   showDeletedAnimation();
 
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(
-      JSON.stringify({
-        type: "delete_all",
-        room: roomId
-      })
-    );
-  }
+  broadcastToRoom({
+  type: "delete_all"
+});
 });
 
 /* =========================
@@ -527,12 +516,12 @@ function handleSocketMessage(raw) {
 }
 
 function disconnect() {
-  if (socket) {
+  if (realtimeChannel) {
     try {
-      socket.close();
+      realtimeChannel.close();
     } catch {}
 
-    socket = null;
+    realtimeChannel = null;
   }
 }
 
